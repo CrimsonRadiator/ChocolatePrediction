@@ -47,10 +47,11 @@ def readBikeDataSet():
             idx = idx + 1
 
         #return tuples of training and test data
-        resultTrainingData = (np.array(normalizeInputDataTable(trainingData)) , np.array([int(row[16]) for row in trainingData]))
+        resultTrainingData = (np.array(normalizeInputDataTable(trainingData)), np.array([int(row[16]) for row in trainingData]))
         resultTestData = (np.array(normalizeInputDataTable(testData)), np.array([int(row[16]) for row in testData]))
 
         return (resultTrainingData, resultTestData)
+
 
 if __name__ == "__main__":
         readBikeDataSet()
