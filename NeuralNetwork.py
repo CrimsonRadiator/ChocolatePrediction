@@ -58,34 +58,35 @@ class Network(object):
         trainingData is a list op pairs (x,y)
         where x is an input and y is a desired output.
         """
-        np.random.shuffle(trainingData)
         for i in range(epochs):
+            np.random.shuffle(trainingData)
             already_done = 0
-            # We create mini batch by taking samples from training data
-            if already_done+miniBatchSize < trainingData.__len__():
-                miniBatch = trainingData[already_done:already_done + miniBatchSize]
-            else:
-                miniBatchSize = trainingData.__len__() - already_done
-                miniBatch = trainingData[already_done:already_done + miniBatchSize]
-            already_done += miniBatchSize
-            # prepare table which will held modifiers for weights after backpropagation
+            for j in range(0, int(trainingData.__len__()/miniBatchSize)):
+                # We create mini batch by taking samples from training data
+                if already_done+miniBatchSize < trainingData.__len__():
+                    miniBatch = trainingData[already_done:already_done + miniBatchSize]
+                else:
+                    miniBatchSize = trainingData.__len__() - already_done
+                    miniBatch = trainingData[already_done:already_done + miniBatchSize]
+                already_done += miniBatchSize
+                # prepare table which will held modifiers for weights after backpropagation
 
-            nabla_w = [np.zeros(w.shape) for w in self.weights]
+                nabla_w = [np.zeros(w.shape) for w in self.weights]
 
-            for row in miniBatch:
-                # by our convention, first element contain inputs, and last element is desired output
-                desired_output = row[-1]
-                network_input = row[0]
+                for row in miniBatch:
+                    # by our convention, first element contain inputs, and last element is desired output
+                    desired_output = row[-1]
+                    network_input = row[0]
 
-                delta_nabla_w = self.backpropagation(network_input, desired_output)
-                delta_nabla_w[0] = np.delete(delta_nabla_w[0], -1, 0)
+                    delta_nabla_w = self.backpropagation(network_input, desired_output)
+                    delta_nabla_w[0] = np.delete(delta_nabla_w[0], -1, 0)
 
-                # delta_nabla_w[1] = np.delete(delta_nabla_w[1],-1)
-                # assign modifiers calculated in backpropagation to apropriate positions
-                nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+                    # delta_nabla_w[1] = np.delete(delta_nabla_w[1],-1)
+                    # assign modifiers calculated in backpropagation to apropriate positions
+                    nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
 
-                # update our weights by applying results from backpropagation with respect to learning rate
-            self.weights = [w - (lRate/len(miniBatch)) * nw for w, nw in zip(self.weights, nabla_w)]
+                    # update our weights by applying results from backpropagation with respect to learning rate
+                self.weights = [w - (lRate/len(miniBatch)) * nw for w, nw in zip(self.weights, nabla_w)]
             print('a', self.costFunction(network_input, desired_output))
 
     def sigmoid(self, z):
