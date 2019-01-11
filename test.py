@@ -1,18 +1,27 @@
 import NeuralNetwork
 import bikeDatasetLoader
+import numpy
 
 training_data, result_data = bikeDatasetLoader.readBikeDataSet()
 
-network = NeuralNetwork.Network([12, 15, 1])
+network = NeuralNetwork.Network([10, 15, 1])
 
-print('training data: ' + '\n' + training_data.__str__() + '\n')
-network_input = training_data[:-1]
-desired_output = training_data[-1]
-print(network_input.__len__())
-print('network input: ' + '\n' + network_input.__str__() + '\n')
-print('desired output: ' + '\n' + desired_output.__str__() + '\n')
+paired_data = []
+paired_result_data = []
 
-for i in range(1, 200):
-    #print('weights: ' + n.weights.__str__())
-    #print(network.SGD([[network_input, desired_output]], 1, 1, 1))
-    pass
+for x_row, y_row in zip(training_data[0], training_data[1]):
+    paired_data.append([x_row.reshape(10, 1), y_row.reshape(1, 1)])
+
+for x_row, y_row in zip(result_data[0], result_data[1]):
+    paired_result_data.append([x_row.reshape(10, 1), y_row.reshape(1, 1)])
+
+
+network.SGD(paired_data, 5, 0.5, 750)
+
+
+
+for row in paired_data:
+    continue
+    #print(row[0])
+    print('result ', network.feedforward(row[0])*977.0, '\t', row[1]*977.0)
+
