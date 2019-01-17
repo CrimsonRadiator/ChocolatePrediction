@@ -53,14 +53,14 @@ class Network(object):
             nabla[-i] = np.dot(delta, np.append(activations[-i-1], [[1]], axis=0).transpose())
         return nabla
 
-    def SGD(self, trainingData, miniBatchSize, lRate, epochs, testData = None):
+    def SGD(self, trainingData, miniBatchSize, lRate, epochs, testData):
         """Stochastic Gradient Descent implementation.
         trainingData is a list op pairs (x,y)
         where x is an input and y is a desired output.
         """
         n = trainingData.__len__()
         for i in range(epochs):
-            print(i)
+            tmp = 0
             random.shuffle(trainingData)
             miniBatch = [trainingData[k:k+miniBatchSize] for k in range(0, n, miniBatchSize)]
 
@@ -77,12 +77,10 @@ class Network(object):
                     nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
 
                 # update our weights by applying results from backpropagation with respect to learning rate
-                self.weights = [w - (lRate/len(row)) * nw for w, nw in zip(self.weights, nabla_w)]
-            if testData:
-                tmp = 0
-                for row in testData:
-                        tmp += math.fabs((row[1] - self.feedforward(row[0]))) * 977.0
-                print('i', i, 'mean: ', tmp / testData.__len__())
+                self.weights = [w - (lRate/len(miniBatch)) * nw for w, nw in zip(self.weights, nabla_w)]
+            for row in testData:
+                    tmp += math.fabs((row[1] - self.feedforward(row[0]))) * 977.0
+            print('i', i, 'mean: ', tmp / testData.__len__())
 
     def sigmoid(self, z):
         """The sigmoid function"""

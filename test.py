@@ -3,7 +3,6 @@ import math
 import datasetLoader
 
 training_data, result_data = datasetLoader.readBikeDataSet()
-#training_data, result_data = datasetLoader.getSinDataSet(1000)
 
 network = NeuralNetwork.Network([11, 50, 1])
 
@@ -16,7 +15,7 @@ for x_row, y_row in zip(training_data[0], training_data[1]):
 for x_row, y_row in zip(result_data[0], result_data[1]):
     paired_result_data.append([x_row.reshape(11, 1), y_row.reshape(1, 1)])
 
-network.SGD(paired_data, 20, 0.5, 100)
+network.SGD(paired_data, 10, 200, 500, paired_result_data)
 
 tmp = 0
 

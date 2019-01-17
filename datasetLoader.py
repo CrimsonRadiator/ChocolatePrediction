@@ -73,19 +73,19 @@ def getSinDataSet(size):
     x = 0
     idx = 0
     testDataIndexes = random.sample(range(0, size), int(size/10))
-    step = math.pi * 2 / size
-    while x < math.pi * 2:
+    step = math.pi * 2 / (size-1)
+    while x <= math.pi*2:
         if idx in testDataIndexes:
-            testInputs.append([x])
+            testInputs.append([x/(math.pi*2)])
             testOutputs.append([math.sin(x)])
         else:
-            trainInputs.append([x])
+            trainInputs.append([x/(math.pi*2)])
             trainOutputs.append([math.sin(x)])
         x += step
         idx += 1
 
-    resultTrainingData = (np.array(testInputs), np.array(testOutputs))
-    resultTestData = (np.array(trainInputs), np.array(trainOutputs))
+    resultTrainingData = (np.array(trainInputs), np.array(trainOutputs))
+    resultTestData = (np.array(testInputs), np.array(testOutputs))
 
 
     return (resultTrainingData, resultTestData)
