@@ -1,6 +1,7 @@
 import csv
 import numpy as np
 import random
+import math
 """
 Library for loading Bike-Sharing-Dataset data. 
 """
@@ -9,7 +10,7 @@ Library for loading Bike-Sharing-Dataset data.
 Normalizes csv row parameters to fit [0, 1] range which is ideal for neural network.
 """
 def normalizeInputDataTable(dataTable):
-    return [[(float(row[2])-1)/3, float(row[3]), (float(row[4])-1)/11, (float(row[5]))/23,
+    return [[(float(row[2])-1)/3, (float(row[4])-1)/11, (float(row[5]))/23,
             float(row[6]), (float(row[7]))/6, float(row[8]), (float(row[9])-1)/3, float(row[10]),
             float(row[11]), float(row[12]), float(row[13])] for row in dataTable]
 
@@ -58,6 +59,36 @@ def readBikeDataSet():
 
         return (resultTrainingData, resultTestData)
 
+"""
+Returns tuple containing training and testing data for sin function in such manner as ndarray:
+resultTrainingData[0] - arrays of inputs
+resultTrainingData[1] - outputs
+"""
+def getSinDataSet(size):
+    trainInputs = []
+    trainOutputs = []
+    testInputs = []
+    testOutputs = []
+
+    x = 0
+    idx = 0
+    testDataIndexes = random.sample(range(0, size), int(size/10))
+    step = math.pi * 2 / size
+    while x < math.pi * 2:
+        if idx in testDataIndexes:
+            testInputs.append([x])
+            testOutputs.append([math.sin(x)])
+        else:
+            trainInputs.append([x])
+            trainOutputs.append([math.sin(x)])
+        x += step
+        idx += 1
+
+    resultTrainingData = (np.array(testInputs), np.array(testOutputs))
+    resultTestData = (np.array(trainInputs), np.array(trainOutputs))
+
+
+    return (resultTrainingData, resultTestData)
 
 if __name__ == "__main__":
         readBikeDataSet()

@@ -1,6 +1,6 @@
 import numpy as np
 import random
-
+import math
 
 class Network(object):
     def __init__(self, layers):
@@ -79,10 +79,7 @@ class Network(object):
                 # update our weights by applying results from backpropagation with respect to learning rate
                 self.weights = [w - (lRate/len(miniBatch)) * nw for w, nw in zip(self.weights, nabla_w)]
             for row in testData:
-                if ((row[1] - self.feedforward(row[0]))) > 0:
-                    tmp += (row[1] - self.feedforward(row[0])) * 977.0
-                else:
-                    tmp -= (row[1] - self.feedforward(row[0])) * 977.0
+                    tmp += math.fabs((row[1] - self.feedforward(row[0]))) * 977.0
             print('i', i, 'mean: ', tmp / testData.__len__())
 
     def sigmoid(self, z):
