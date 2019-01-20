@@ -4,18 +4,22 @@ import math
 
 class Network(object):
 
-    def __init__( self, inputs_n, hidden_n, output_n ):
-        
-        self.inputs_n = inputs_n
-        self.hidden_n = hidden_n
-        self.output_n = output_n
+    def __init__( self, sizes):
 
-        self.weights =  [   np.random.randn( hidden_n, inputs_n ) ,
-                            np.random.randn( output_n, hidden_n ) ]
+        self.layers_count = len(sizes)
 
-        self.biases =   [   np.random.randn( hidden_n, 1 ),
-                            np.random.randn( output_n, 1 )  ]
-        print(self.weights, self.biases)
+        #input and output don't have weights
+        self.weights = [np.random.randn(y, x) for x, y in zip(sizes[:-1], sizes[1:])]
+
+        #self.weights =  [   np.random.randn( self.hidden_n, self.inputs_n ) ,
+        #                    np.random.randn( self.output_n, self.hidden_n ) ]
+
+        #input layer dont have bias
+        self.biases = [np.random.randn(x, 1) for x in sizes[1:]]
+
+        #self.biases =   [   np.random.randn( self.hidden_n, 1 ),
+        #                    np.random.randn( self.output_n, 1 )  ]
+        print('w ', self.weights, '\nb ', self.biases)
 
     def backprop(self, x, y):
         """
@@ -23,28 +27,50 @@ class Network(object):
         y has dims (output_n, 1)
         """
         #forward pass
-        a0 = x
-        z1 = np.dot( self.weights[0], x ) + self.biases[0] # (hidden, 1)
-        a1 = ReLU( z1 ) # hidden x 1
-        z2 = np.dot( self.weights[1], a1 ) + self.biases[1] # (output, 1)
-        a2 =  z2
+
+
+        # a0 = x
+        layerInput = x
+        #calc  and store inputs for output layer
+        inputs = []
+        for i in range(self.layers_count-2):
+            inputs.append(np.dot(self.weights[i], layerInput) + self.biases[i]) # (hidden, 1)
+            layerInput = ReLU(inputs[i]) # hidden x 1
+
+        #calc output for output layer
+        z2 = np.dot(self.weights[-1], layerInput) + self.biases[-1] # (output, 1)
+        a2 = z2
 
         #backward pass
-        #cost = 0.5*( ( x-y )**2 )    
-        
-        nabla_b = [ np.zeros( b.shape ) for b in self.biases ]
-        nabla_w = [ np.zeros( w.shape ) for w in self.weights ]
+        #cost = 0.5*( ( x-y )**2 )
+
+        nabla_b = [np.zeros(b.shape) for b in self.biases ]
+        nabla_w = [np.zeros(w.shape) for w in self.weights ]
+
+        #for x in nabla_b:
+        #    print(x.shape)
+        #for y in nabla_w:
+        #    print(y.shape)
+
+        #calculate delta for output layer
+        delta = (a2-y)
+        nabla_b[-1] = delta
+        nabla_w[-1] = np.dot(delta, layerInput.T) # (output, 1) . (1, hidden)
+        #delta = np.dot(self.weights[-1].T, delta) * ReLUprime(z1)  # (hidden, 1)
+
+        #calculate delta for hidden layers
+        for i in reversed(range(self.layers_count-2)):
+            delta = np.dot(self.weights[i+1].T, delta) * ReLUprime(inputs[i])  # (hidden, 1)
+            nabla_b[i] = delta
+            if not i == 0:
+                nabla_w[i] = np.dot(delta, inputs[i-1].T) #(hidden, 1) . (1, input_n)
+            else:
+                nabla_w[i] = np.dot(delta, x.T)
 
 
-        delta = (a2-y) 
-        nabla_b[1] = delta
-        nabla_w[1] = np.dot( delta, a1.T) # (output, 1) . (1, hidden)
-        
-        delta = np.dot(self.weights[0], a0) * ReLUprime( z1 ) #(hidden, 1)
-        nabla_b[0] = delta
-        nabla_w[0] = np.dot(delta, a0.T) #(hidden, 1) . (1, input_n)
 
-        return ( nabla_b, nabla_w )
+
+        return (nabla_b, nabla_w)
 
     def SGD(self, trainingData, miniBatchSize, lRate, epochs, testData):
         """Stochastic Gradient Descent implementation.
@@ -54,7 +80,11 @@ class Network(object):
         n = trainingData.__len__()
 
         for i in range(epochs):
-            print("epoch: ", i)
+            #auto reduce learning rate every x epochs
+            if i > 0 and i % 10 == 0:
+                lRate = lRate * 0.95
+                #print('lrate', lRate)
+           #  print("epoch: ", i)
             # first we have to shuffle our training data for each epoch
             random.shuffle(trainingData)
             # then we split the data into equal-sized minibatches
@@ -76,11 +106,24 @@ class Network(object):
                 # dividing result by length of minibatch (so we have nice average across whole minibatch)
                 self.weights = [w - nw * (lRate/len(miniBatch)) for w, nw in zip(self.weights, nabla_w)]
                 self.biases = [b - nb * (lRate/len(miniBatch)) for b, nb in zip(self.biases, nabla_b)]
-        print("w",self.weights,"b", self.biases) 
+            total_error = 0
+            for row in testData:
+                #print(row[1], self.feedforward(row[0]))
+                tmp = abs(row[1] - self.feedforward(row[0])) / row[1]
+                total_error += tmp
+            #print(total_error / len(testData))
+        print("w ", self.weights, "\nb ", self.biases)
+
+
     def feedforward(self, x):
-        z1 = np.dot(self.weights[0], x) + self.biases[0] # (hidden, 1)
-        a1 = ReLU(z1) # hidden x 1
-        z2 = np.dot(self.weights[1], a1) + self.biases[1] # (output, 1)
+        layerInput = x
+        inputs = []
+        for i in range(self.layers_count-2):
+            inputs.append(np.dot(self.weights[i], layerInput) + self.biases[i]) # (hidden, 1)
+            layerInput = ReLU(inputs[i]) # hidden x 1
+
+        #calc output for output layer
+        z2 = np.dot(self.weights[-1], layerInput) + self.biases[-1] # (output, 1)
         a2 = z2
         return a2
         

@@ -82,6 +82,8 @@ class Network(object):
                     tmp += math.fabs((row[1] - self.feedforward(row[0]))) * 977.0
             print('i', i, 'mean: ', tmp / testData.__len__())
 
+
+
     def sigmoid(self, z):
         """The sigmoid function"""
         return 1.0/(1.0+np.exp(-z))

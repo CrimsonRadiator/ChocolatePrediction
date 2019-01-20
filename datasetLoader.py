@@ -10,9 +10,9 @@ Library for loading Bike-Sharing-Dataset data.
 Normalizes csv row parameters to fit [0, 1] range which is ideal for neural network.
 """
 def normalizeBikeInputDataTable(dataTable):
-    return [[(float(row[2])-1)/3, (float(row[4])-1)/11, (float(row[5]))/23,
-            float(row[6]), (float(row[7]))/6, float(row[8]), (float(row[9])-1)/3, float(row[10]),
-            float(row[11]), float(row[12]), float(row[13])] for row in dataTable]
+    return [[(float(row[2])-1)/3 - 0.5, (float(row[4])-1)/11 - 0.5, (float(row[5]))/23 - 0.5,
+            float(row[6]) - 0.5, (float(row[7]))/6 - 0.5, float(row[8]) - 0.5, (float(row[9])-1)/3 - 0.5, float(row[10]) - 0.5,
+            float(row[11]) - 0.5, float(row[12]) - 0.5, float(row[13])  - 0.5] for row in dataTable]
 
 
 """
