@@ -109,6 +109,7 @@ def readConcreteDataset():
         firstLine = next(csvReader)
 
         idx = 1
+        maximums = [-1 * 8]
         # distribute data between test and training lists
         for row in csvReader:
             if idx in testDataIndexes:
@@ -116,25 +117,47 @@ def readConcreteDataset():
             else:
                 trainingData.append(row)
             idx = idx + 1
-
+        print(maximums)
         idx+= 1
         # return tuples of training and test data
-        resultTrainingData = (
-        np.array(normalizeConcreteInputDataTable(trainingData)), np.array([float(row[8]) / 82.6 for row in trainingData]))
-        resultTestData = (
-        np.array(normalizeConcreteInputDataTable(testData)), np.array([float(row[8]) / 82.6 for row in testData]))
+        #resultTrainingData = (
+        #np.array(normalizeConcreteInputDataTable(trainingData)), np.array([float(row[8]) / 82.6 for row in trainingData]))
+       # resultTestData = (
+       # np.array(normalizeConcreteInputDataTable(testData)), np.array([float(row[8]) / 82.6 for row in testData]))
 
+        resultTrainingData = (
+        np.array(normalizeConcreteInputDataTable(trainingData)), np.array([float(row[8])  for row in trainingData]))
+        resultTestData = (
+        np.array(normalizeConcreteInputDataTable(testData)), np.array([float(row[8])  for row in testData]))
         return (resultTrainingData, resultTestData)
 
 
 
 def normalizeConcreteInputDataTable(dataTable):
-    return [[(float(row[0]))/540, (float(row[1]))/359.4, (float(row[2]))/200.1,
-             float(row[3])/247, (float(row[4]))/32.2, float(row[5])/1145, (float(row[6]))/992.6, (float(row[7]))/365] for row in dataTable]
+    return [[(float(row[0]))/540 -0.5, (float(row[1]))/359.4 -0.5, (float(row[2]))/200.1 -0.5,
+             float(row[3])/247 -0.5, (float(row[4]))/32.2 -0.5, float(row[5])/1145 -0.5, (float(row[6]))/992.6 -0.5, (float(row[7]))/365 -0.5] for row in dataTable]
 
+def getTestDataSet(size):
+    trainInputs = []
+    trainOutputs = []
+    testInputs = []
+    testOutputs = []
+  
+    for i in range(int(size*0.8)):
+        s = np.random.random_integers(1, 10, 2)
+        trainInputs.append(s)
+        if s[1] > 5.0:
+            trainOutputs.append(1)
+        else:
+            trainOutputs.append(0)
 
+    for i in range(int(size*0.2)):
+        s = np.random.random_integers(1,10,2)
+        testInputs.append(s)
+        if s[1] > 5.0:
+            testOutputs.append(1)
+        else:
+            testOutputs.append(0)
 
-
-if __name__ == "__main__":
-        readConcreteDataset()
-        readBikeDataSet()
+    return ((np.array(trainInputs), np.array(trainOutputs)),
+            (np.array(testInputs), np.array(testOutputs)))

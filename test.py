@@ -1,28 +1,26 @@
-import NeuralNetwork
+import NetworkTwo
 import math
 import datasetLoader
 
-training_data, result_data = datasetLoader.readBikeDataSet()
 
-network = NeuralNetwork.Network([11, 50, 1])
+training_data, result_data = datasetLoader.readConcreteDataset()
+
+network = NetworkTwo.Network(8,8,1)
 
 paired_data = []
 paired_result_data = []
 
 for x_row, y_row in zip(training_data[0], training_data[1]):
-    paired_data.append([x_row.reshape(11, 1), y_row.reshape(1, 1)])
+    paired_data.append([x_row.reshape(8, 1), y_row.reshape(1, 1)])
 
 for x_row, y_row in zip(result_data[0], result_data[1]):
-    paired_result_data.append([x_row.reshape(11, 1), y_row.reshape(1, 1)])
+    paired_result_data.append([x_row.reshape(8, 1), y_row.reshape(1, 1)])
 
-network.SGD(paired_data, 10, 200, 500, paired_result_data)
+network.SGD(paired_data, 10, 0.07,100, paired_result_data)
 
-tmp = 0
-
+total_error = 0
 for row in paired_result_data:
-    # continue
-    # print(row[0])
-    tmp += math.fabs((row[1] - network.feedforward(row[0]))) * 977.0
-    print('tmp ', tmp, ' result ', network.feedforward(row[0])*977.0, '\t', row[1]*977.0)
-
-print('\nmean: ', tmp/paired_result_data.__len__())
+    print(row[1], network.feedforward(row[0])) 
+    tmp = abs(row[1] - network.feedforward(row[0]))/row[1]
+    total_error+=tmp
+print(total_error/len(paired_result_data))
