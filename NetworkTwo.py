@@ -11,14 +11,9 @@ class Network(object):
         #input and output don't have weights
         self.weights = [np.random.randn(y, x) for x, y in zip(sizes[:-1], sizes[1:])]
 
-        #self.weights =  [   np.random.randn( self.hidden_n, self.inputs_n ) ,
-        #                    np.random.randn( self.output_n, self.hidden_n ) ]
-
         #input layer dont have bias
         self.biases = [np.random.randn(x, 1) for x in sizes[1:]]
 
-        #self.biases =   [   np.random.randn( self.hidden_n, 1 ),
-        #                    np.random.randn( self.output_n, 1 )  ]
         print('w ', self.weights, '\nb ', self.biases)
 
     def backprop(self, x, y):
@@ -28,14 +23,12 @@ class Network(object):
         """
         #forward pass
 
-
-        # a0 = x
         layerInput = x
         #calc  and store inputs for output layer
         inputs = []
         for i in range(self.layers_count-2):
             inputs.append(np.dot(self.weights[i], layerInput) + self.biases[i]) # (hidden, 1)
-            layerInput = ReLU(inputs[i]) # hidden x 1
+            layerInput = sigmoid(inputs[i]) # hidden x 1
 
         #calc output for output layer
         z2 = np.dot(self.weights[-1], layerInput) + self.biases[-1] # (output, 1)
@@ -47,11 +40,6 @@ class Network(object):
         nabla_b = [np.zeros(b.shape) for b in self.biases ]
         nabla_w = [np.zeros(w.shape) for w in self.weights ]
 
-        #for x in nabla_b:
-        #    print(x.shape)
-        #for y in nabla_w:
-        #    print(y.shape)
-
         #calculate delta for output layer
         delta = (a2-y)
         nabla_b[-1] = delta
@@ -60,7 +48,7 @@ class Network(object):
 
         #calculate delta for hidden layers
         for i in reversed(range(self.layers_count-2)):
-            delta = np.dot(self.weights[i+1].T, delta) * ReLUprime(inputs[i])  # (hidden, 1)
+            delta = np.dot(self.weights[i+1].T, delta) * sigmoidprime(inputs[i])  # (hidden, 1)
             nabla_b[i] = delta
             if not i == 0:
                 nabla_w[i] = np.dot(delta, inputs[i-1].T) #(hidden, 1) . (1, input_n)
@@ -81,10 +69,10 @@ class Network(object):
 
         for i in range(epochs):
             #auto reduce learning rate every x epochs
-            if i > 0 and i % 10 == 0:
+            if i > 0 and i % 20 == 0:
                 lRate = lRate * 0.95
                 #print('lrate', lRate)
-           #  print("epoch: ", i)
+            #print("epoch: ", i)
             # first we have to shuffle our training data for each epoch
             random.shuffle(trainingData)
             # then we split the data into equal-sized minibatches
@@ -111,7 +99,7 @@ class Network(object):
                 #print(row[1], self.feedforward(row[0]))
                 tmp = abs(row[1] - self.feedforward(row[0])) / row[1]
                 total_error += tmp
-            #print(total_error / len(testData))
+            print(total_error / len(testData))
         print("w ", self.weights, "\nb ", self.biases)
 
 
@@ -120,21 +108,18 @@ class Network(object):
         inputs = []
         for i in range(self.layers_count-2):
             inputs.append(np.dot(self.weights[i], layerInput) + self.biases[i]) # (hidden, 1)
-            layerInput = ReLU(inputs[i]) # hidden x 1
+            layerInput = sigmoid(inputs[i]) # hidden x 1
 
         #calc output for output layer
         z2 = np.dot(self.weights[-1], layerInput) + self.biases[-1] # (output, 1)
         a2 = z2
         return a2
         
-def ReLU(x):
+def sigmoid(x):
     """ReLU function for hidden layer"""
-    #return np.maximum(x, 0)
     return 1.0/(1.0+np.exp(-x))
 
-def ReLUprime(x):
+def sigmoidprime(x):
     """ReLU derivative"""
-    #x[ x<=0 ] = 0
-    #x[ x>0 ] = 1
-    #return x
-    return ReLU(x)*(1-ReLU(x))
+
+    return sigmoid(x) * (1 - sigmoid(x))
