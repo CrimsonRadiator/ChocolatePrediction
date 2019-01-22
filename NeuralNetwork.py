@@ -68,8 +68,9 @@ class Network(object):
         n = trainingData.__len__()
 
         for i in range(epochs):
+            print("epoch: ", i, "/", epochs)
             #auto reduce learning rate every x epochs
-            if i > 0 and i % 20 == 0:
+            if i > 0 and i % 10 == 0:
                 lRate = lRate * 0.95
                 #print('lrate', lRate)
             #print("epoch: ", i)
@@ -94,13 +95,13 @@ class Network(object):
                 # dividing result by length of minibatch (so we have nice average across whole minibatch)
                 self.weights = [w - nw * (lRate/len(miniBatch)) for w, nw in zip(self.weights, nabla_w)]
                 self.biases = [b - nb * (lRate/len(miniBatch)) for b, nb in zip(self.biases, nabla_b)]
-            total_error = 0
-            for row in testData:
-                #print(row[1], self.feedforward(row[0]))
-                tmp = abs(row[1] - self.feedforward(row[0])) / row[1]
-                total_error += tmp
-            print(total_error / len(testData))
-        print("w ", self.weights, "\nb ", self.biases)
+            #total_error = 0
+            #for row in testData:
+            #    #print(row[1], self.feedforward(row[0]))
+            #    tmp = abs(row[1] - self.feedforward(row[0])) / row[1]
+            #    total_error += tmp
+            #print(total_error / len(testData))
+        #print("w ", self.weights, "\nb ", self.biases)
 
 
     def feedforward(self, x):
