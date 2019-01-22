@@ -1,11 +1,11 @@
-import NetworkTwo
+import NeuralNetwork
 import math
 import datasetLoader
 
 
 training_data, result_data = datasetLoader.readConcreteDataset()
 
-network = NetworkTwo.Network([8, 10, 20, 1])
+network = NeuralNetwork.Network([8, 10, 20, 1])
 
 paired_data = []
 paired_result_data = []

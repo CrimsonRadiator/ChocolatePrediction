@@ -3,55 +3,62 @@ import random
 import math
 
 class Network(object):
-    def __init__(self, layers):
-        """ layers is a list containing numbers of neurons
-        in the layers, from the first to the last.
+
+    def __init__( self, sizes):
+
+        self.layers_count = len(sizes)
+
+        #input and output don't have weights
+        self.weights = [np.random.randn(y, x) for x, y in zip(sizes[:-1], sizes[1:])]
+
+        #input layer dont have bias
+        self.biases = [np.random.randn(x, 1) for x in sizes[1:]]
+
+        print('w ', self.weights, '\nb ', self.biases)
+
+    def backprop(self, x, y):
         """
-        self.layers = layers
-        """Initialze weights with random numbers from 
-        standard normal distribution. +1 for the bias weights. 
+        x has dims (inputs_n, 1)
+        y has dims (output_n, 1)
         """
-        self.weights = [np.random.randn(y, x+1)
-            for y, x in zip(self.layers[1:], self.layers[:-1])]
+        #forward pass
 
-    def feedforward(self, x):
-        """Return network output for input x"""
-        for w in self.weights:
-            #add bias
-            #print('\nx: ' + x.__str__() + 'w: ' + w.__str__())
-            x = np.append(x, [[1]], axis=0)
-            x = self.sigmoid(np.dot(w,x))
-        return x
+        layerInput = x
+        #calc  and store inputs for output layer
+        inputs = []
+        for i in range(self.layers_count-2):
+            inputs.append(np.dot(self.weights[i], layerInput) + self.biases[i]) # (hidden, 1)
+            layerInput = sigmoid(inputs[i]) # hidden x 1
 
-    def costFunction(self, x, y):
-        """Calculate MSE of input x and y"""
-        a = self.feedforward(x)
-        return 0.5*(a - y)**2
+        #calc output for output layer
+        z2 = np.dot(self.weights[-1], layerInput) + self.biases[-1] # (output, 1)
+        a2 = z2
 
-    def backpropagation(self, x, y):
-        """Backpropagation algorighm.
-        x is numpy.ndarray (shape (?,1)) of inputs.
-        y is numpy.ndarray (shape (?,1)) of desired outputs.
-        """
-        activations = [x]
-        z = []
-        for w in self.weights:
-            #add bias
-            zw = np.dot(w, np.append(x, [[1]], axis=0))
-            x = self.sigmoid(zw)
-            z.append(zw)
-            activations.append(x)
+        #backward pass
+        #cost = 0.5*( ( x-y )**2 )
 
-        delta = (activations[-1] - y.transpose()) * self.sigmoidPrime(z[-1])
-        nabla = [np.zeros(w.shape) for w in self.weights]
-        nabla[-1] = np.dot(delta, np.append(activations[-2], [[1]], axis=0).transpose())
+        nabla_b = [np.zeros(b.shape) for b in self.biases ]
+        nabla_w = [np.zeros(w.shape) for w in self.weights ]
 
-        for i in range(2, len(self.layers)):
-            z = z[-i]
-            sp = np.append(self.sigmoidPrime(z), [[1]], axis=0)
-            delta = np.dot(self.weights[-i+1].transpose(), delta) * sp
-            nabla[-i] = np.dot(delta, np.append(activations[-i-1], [[1]], axis=0).transpose())
-        return nabla
+        #calculate delta for output layer
+        delta = (a2-y)
+        nabla_b[-1] = delta
+        nabla_w[-1] = np.dot(delta, layerInput.T) # (output, 1) . (1, hidden)
+        #delta = np.dot(self.weights[-1].T, delta) * ReLUprime(z1)  # (hidden, 1)
+
+        #calculate delta for hidden layers
+        for i in reversed(range(self.layers_count-2)):
+            delta = np.dot(self.weights[i+1].T, delta) * sigmoidprime(inputs[i])  # (hidden, 1)
+            nabla_b[i] = delta
+            if not i == 0:
+                nabla_w[i] = np.dot(delta, inputs[i-1].T) #(hidden, 1) . (1, input_n)
+            else:
+                nabla_w[i] = np.dot(delta, x.T)
+
+
+
+
+        return (nabla_b, nabla_w)
 
     def SGD(self, trainingData, miniBatchSize, lRate, epochs, testData):
         """Stochastic Gradient Descent implementation.
@@ -59,52 +66,60 @@ class Network(object):
         where x is an input and y is a desired output.
         """
         n = trainingData.__len__()
+
         for i in range(epochs):
-            tmp = 0
+            #auto reduce learning rate every x epochs
+            if i > 0 and i % 20 == 0:
+                lRate = lRate * 0.95
+                #print('lrate', lRate)
+            #print("epoch: ", i)
+            # first we have to shuffle our training data for each epoch
             random.shuffle(trainingData)
-            miniBatch = [trainingData[k:k+miniBatchSize] for k in range(0, n, miniBatchSize)]
+            # then we split the data into equal-sized minibatches
+            batch = [trainingData[k:k+miniBatchSize] for k in range(0, n, miniBatchSize)]
 
-            # prepare table which will held modifiers for weights after backpropagation
-            for row in miniBatch:
+            # then we run SGD for each mini-batch
+            for miniBatch in batch:
                 nabla_w = [np.zeros(w.shape) for w in self.weights]
-                for network_input, desired_output in row:
+                nabla_b = [np.zeros(b.shape) for b in self.biases]
+                for network_input, desired_output in miniBatch:
                     # by our convention, first element contain inputs, and last element is desired output
-                    delta_nabla_w = self.backpropagation(network_input, desired_output)
-                    delta_nabla_w[0] = np.delete(delta_nabla_w[0], -1, 0)
-
-                    # delta_nabla_w[1] = np.delete(delta_nabla_w[1],-1)
+                    delta_nabla_b, delta_nabla_w = self.backprop(network_input, desired_output)
+                    
                     # assign modifiers calculated in backpropagation to apropriate positions
                     nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-
-                # update our weights by applying results from backpropagation with respect to learning rate
-                self.weights = [w - (lRate/len(miniBatch)) * nw for w, nw in zip(self.weights, nabla_w)]
+                    nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
+               
+                # update our weights by applying results from backpropagation with respect to learning rate and by
+                # dividing result by length of minibatch (so we have nice average across whole minibatch)
+                self.weights = [w - nw * (lRate/len(miniBatch)) for w, nw in zip(self.weights, nabla_w)]
+                self.biases = [b - nb * (lRate/len(miniBatch)) for b, nb in zip(self.biases, nabla_b)]
+            total_error = 0
             for row in testData:
-                    tmp += math.fabs((row[1] - self.feedforward(row[0]))) * 977.0
-            print('i', i, 'mean: ', tmp / testData.__len__())
+                #print(row[1], self.feedforward(row[0]))
+                tmp = abs(row[1] - self.feedforward(row[0])) / row[1]
+                total_error += tmp
+            print(total_error / len(testData))
+        print("w ", self.weights, "\nb ", self.biases)
 
 
+    def feedforward(self, x):
+        layerInput = x
+        inputs = []
+        for i in range(self.layers_count-2):
+            inputs.append(np.dot(self.weights[i], layerInput) + self.biases[i]) # (hidden, 1)
+            layerInput = sigmoid(inputs[i]) # hidden x 1
 
-    def sigmoid(self, z):
-        """The sigmoid function"""
-        return 1.0/(1.0+np.exp(-z))
+        #calc output for output layer
+        z2 = np.dot(self.weights[-1], layerInput) + self.biases[-1] # (output, 1)
+        a2 = z2
+        return a2
+        
+def sigmoid(x):
+    """ReLU function for hidden layer"""
+    return 1.0/(1.0+np.exp(-x))
 
-    def sigmoidPrime(self, z):
-        return self.sigmoid(z)*(1-self.sigmoid(z))
+def sigmoidprime(x):
+    """ReLU derivative"""
 
-
-# n = Network([3, 3, 1])
-# X = np.array([[1, 0.5, 0]]).T
-# Y = np.array([[0.95]])
-# X1 = np.array([[0, 1, 0]]).T
-# Y1 = np.array([[0.32]])
-
-# print('x: ' + X.__str__())
-# print('y: ' + Y.__str__())
-# for i in range(1, 10000):
-    # print('weights: ' + n.weights.__str__())
-    # n.SGD([[X, Y]], 1, 1, 1)
-    # n.SGD([[X1, Y1]], 1, 1, 1)
-
-# print('result: ', n.feedforward(X))
-# print('result1: ', n.feedforward(X1))
-# print('result1: ', n.feedforward(X2))
+    return sigmoid(x) * (1 - sigmoid(x))
